@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Threading.Tasks;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace StudentList
 {
@@ -40,7 +41,7 @@ namespace StudentList
                     conn.Close();
                 }
 
-                stdId = SetIdVariable(student.StudentEmailAddress);
+                stdId = GetIdVariable(student.StudentEmailAddress);
 
                 SqlCommand objCmd2 = new SqlCommand("INSERT INTO addresses(studentId, street, city, country) VALUES(@param7,@param8,@param9, @param10)", conn);
                 objCmd2.Parameters.AddWithValue("@param7", stdId);
@@ -85,7 +86,7 @@ namespace StudentList
             }
         }
 
-        private int SetIdVariable(string email)
+        public int GetIdVariable(string email)
         {
             int idStd = 0;
 
@@ -121,6 +122,7 @@ namespace StudentList
                     SqlCommand delCmd = new SqlCommand(query, conn);
                     delCmd.Parameters.AddWithValue("@studentEmail", searchedEmail);
                     delCmd.ExecuteNonQuery();
+                    Console.WriteLine("Student removed");
                 }
                 catch {
                     Console.WriteLine("Couldn't delete student");
@@ -186,6 +188,30 @@ namespace StudentList
                     }
                     conn.Close();
                     return searchedStudent;
+                }
+            }
+        }
+
+        internal void UpdateStudentData(int id, string parameter, string table, string newValue)
+        {
+            var queryUpdate = "UPDATE " + table + " SET " + parameter + " = '" + newValue + "' where StudentId = "  + id;
+
+            using (SqlConnection conn = new SqlConnection("Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\filip\\Projects\\StudentList\\Data\\local_db.mdf;Integrated Security=True;Connect Timeout=30"))
+            {
+                try
+                {
+                    conn.Open();
+                    SqlCommand upCmd = new SqlCommand(queryUpdate, conn);
+                    upCmd.ExecuteNonQuery();
+                    Console.WriteLine("Student data updated");
+                }
+                catch
+                {
+                    Console.WriteLine("Couldn't update student");
+                }
+                finally
+                {
+                    conn.Close();
                 }
             }
         }

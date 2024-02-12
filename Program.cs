@@ -43,7 +43,7 @@ namespace StudentList
                         list.ListStudent();
                         break;
                     case "d":
-                        list.AddStudent();
+                        list.UpdateStudent();
                         break;
                     default:
                         break;
