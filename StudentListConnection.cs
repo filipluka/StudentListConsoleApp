@@ -10,7 +10,7 @@ namespace StudentList
     public class StudentListConnection
     {
         private List<Student> students;
-        private int studentId = 0;
+        private int studentId ;
         private string firstname = "";
         private string lastName = "";
         private string email = "";
@@ -33,8 +33,6 @@ namespace StudentList
         public void AddStudent()
         {
             Student newStudent = GetInputNewStudent();
-
-
             helper.AddToDatabase(newStudent);
         }
 
@@ -72,13 +70,6 @@ namespace StudentList
 
         private Student GetInputNewStudent()
         {
-            Console.WriteLine("Please type students id: ");
-            studentId = Convert.ToInt32(Console.ReadLine());
-            if (string.IsNullOrEmpty(studentId.ToString()))
-            {
-                Console.WriteLine("Students id can't be empty! Input age once more");
-                studentId = Convert.ToInt32(Console.ReadLine());
-            }
             Console.WriteLine("Please type Firstname: ");
             firstname = Console.ReadLine();
             if (string.IsNullOrEmpty(firstname))

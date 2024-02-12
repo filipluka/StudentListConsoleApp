@@ -15,43 +15,60 @@ namespace StudentList
     {
         public void AddToDatabase(Student student)
         {
+            int stdId = 0;
 
             using (SqlConnection conn = new SqlConnection("Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\filip\\Projects\\StudentList\\Data\\local_db.mdf;Integrated Security=True;Connect Timeout=30"))
             {
-                SqlCommand objCmd1 = new SqlCommand("INSERT INTO students(studentID,studentFirstname,studentLastname, studentEmailaddress, studentAge, universityId) VALUES(@param1,@param2,@param3, @param4, @param5, @param6);", conn);
-                objCmd1.Parameters.AddWithValue("@param1", student.StudentID);
+                SqlCommand objCmd1 = new SqlCommand("INSERT INTO students(studentFirstname,studentLastname, studentEmailaddress, studentAge, universityId) VALUES(@param2,@param3, @param4, @param5, @param6);", conn);
                 objCmd1.Parameters.AddWithValue("@param2", student.StudentFirstname);
                 objCmd1.Parameters.AddWithValue("@param3", student.StudentLastname);
                 objCmd1.Parameters.AddWithValue("@param4", student.StudentEmailAddress);
                 objCmd1.Parameters.AddWithValue("@param5", student.Age);
                 objCmd1.Parameters.AddWithValue("@param6", student.University.UniversityId);
 
-                SqlCommand objCmd2 = new SqlCommand("INSERT INTO addresses(studentID,street,city, country) VALUES(@param7,@param8,@param9, @param10)", conn);
-                objCmd2.Parameters.AddWithValue("@param7", student.StudentID);
-                objCmd2.Parameters.AddWithValue("@param8", student.Address.Street);
-                objCmd2.Parameters.AddWithValue("@param9", student.Address.City);
-                objCmd2.Parameters.AddWithValue("@param10", student.Address.Country);
-
-                SqlCommand objCmd3 = new SqlCommand("INSERT INTO grades(studentID,gradeNbr,section, subjectCode) VALUES(@param11,@param12,@param13, @param14)", conn);
-                objCmd3.Parameters.AddWithValue("@param11", student.StudentID);
-                objCmd3.Parameters.AddWithValue("@param12", student.Grade.GradeNo);
-                objCmd3.Parameters.AddWithValue("@param13", student.Grade.Section);
-                objCmd3.Parameters.AddWithValue("@param14", student.Subject.SubjectCode);
-
-                SqlCommand objCmd4 = new SqlCommand("INSERT INTO subjects(subjectCode, subjectName, subjectHours) VALUES(@param15,@param16,@param17)", conn);
-                objCmd4.Parameters.AddWithValue("@param15", student.Subject.SubjectCode);
-                objCmd4.Parameters.AddWithValue("@param16", student.Subject.SubjectName);
-                objCmd4.Parameters.AddWithValue("@param17", student.Subject.SubjectHours);
-
-                SqlCommand objCmd5 = new SqlCommand("INSERT INTO universities(universityId, universityName, universityLocation) VALUES(@param18,@param19,@param20)", conn);
-                objCmd5.Parameters.AddWithValue("@param18", student.University.UniversityId);
-                objCmd5.Parameters.AddWithValue("@param19", student.University.UniversityName);
-                objCmd5.Parameters.AddWithValue("@param20", student.University.UniversityLocation);
-
                 try
                 {
                     conn.Open();
                     objCmd1.ExecuteNonQuery();
+                }
+                catch (SqlException e)
+                {
+                    Console.WriteLine(e.Message.ToString(), "Error Message");
+                }
+                finally
+                {
+                    conn.Close();
+                }
+
+                stdId = SetIdVariable(student.StudentEmailAddress);
+
+                SqlCommand objCmd2 = new SqlCommand("INSERT INTO addresses(studentId, street, city, country) VALUES(@param7,@param8,@param9, @param10)", conn);
+                objCmd2.Parameters.AddWithValue("@param7", stdId);
+                objCmd2.Parameters.AddWithValue("@param8", student.Address.Street);
+                objCmd2.Parameters.AddWithValue("@param9", student.Address.City);
+                objCmd2.Parameters.AddWithValue("@param10", student.Address.Country);
+
+                SqlCommand objCmd3 = new SqlCommand("INSERT INTO grades(studentId, gradeNbr,section, subjectCode) VALUES(@param11, @param12,@param13, @param14)", conn);
+                objCmd3.Parameters.AddWithValue("@param11", stdId);
+                objCmd3.Parameters.AddWithValue("@param12", student.Grade.GradeNo);
+                objCmd3.Parameters.AddWithValue("@param13", student.Grade.Section);
+                objCmd3.Parameters.AddWithValue("@param14", student.Subject.SubjectCode);
+
+                SqlCommand objCmd4 = new SqlCommand("INSERT INTO subjects(subjectCode, subjectName, subjectHours, studentId) VALUES(@param15,@param16,@param17, @param18)", conn);
+                objCmd4.Parameters.AddWithValue("@param15", student.Subject.SubjectCode);
+                objCmd4.Parameters.AddWithValue("@param16", student.Subject.SubjectName);
+                objCmd4.Parameters.AddWithValue("@param17", student.Subject.SubjectHours);
+                objCmd4.Parameters.AddWithValue("@param18", stdId);
+
+                SqlCommand objCmd5 = new SqlCommand("INSERT INTO universities(universityId, universityName, universityLocation, studentId) VALUES(@param19,@param20,@param21, @param22)", conn);
+                objCmd5.Parameters.AddWithValue("@param19", student.University.UniversityId);
+                objCmd5.Parameters.AddWithValue("@param20", student.University.UniversityName);
+                objCmd5.Parameters.AddWithValue("@param21", student.University.UniversityLocation);
+                objCmd5.Parameters.AddWithValue("@param22", stdId);
+
+                try
+                {
+                    conn.Open();
                     objCmd2.ExecuteNonQuery();
                     objCmd3.ExecuteNonQuery();
                     objCmd4.ExecuteNonQuery();
@@ -68,9 +85,33 @@ namespace StudentList
             }
         }
 
+        private int SetIdVariable(string email)
+        {
+            int idStd = 0;
+
+            using (SqlConnection conn = new SqlConnection("Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\filip\\Projects\\StudentList\\Data\\local_db.mdf;Integrated Security=True;Connect Timeout=30"))
+            {
+                SqlCommand idCmd = new SqlCommand("SELECT StudentId from Students where StudentEmailaddress like @studentEmail", conn);
+                idCmd.Parameters.AddWithValue("@studentEmail", email);
+
+                conn.Open();
+
+                using (SqlDataReader oReader = idCmd.ExecuteReader())
+                {
+                    while (oReader.Read())
+                    {
+                        idStd = oReader.GetInt32(oReader.GetOrdinal("StudentId"));
+                    }
+                }
+                conn.Close();
+            }
+            
+            return idStd;
+        }
+
         internal void DeleteStudentData(string searchedEmail)
         {
-            var query = "DELETE Students where Students.StudentEmailaddress like @searchedEmail";
+            var query = "DELETE Students where Students.StudentEmailaddress like @studentEmail";
 
             using (SqlConnection conn = new SqlConnection("Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\filip\\Projects\\StudentList\\Data\\local_db.mdf;Integrated Security=True;Connect Timeout=30"))
             {
